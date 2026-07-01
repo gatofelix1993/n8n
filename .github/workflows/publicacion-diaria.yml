@@ -1,0 +1,22 @@
+name: Publicacion diaria MICELIO VITAL
+
+on:
+  schedule:
+    - cron: '0 13 * * *'   # 13:00 UTC ≈ 09:00 Chile
+  workflow_dispatch:
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Despertar n8n y disparar la publicacion
+        run: |
+          BASE="https://n8n-1-1m5y.onrender.com"
+          HOOK="${{ secrets.N8N_WEBHOOK_URL }}"
+          echo "Despertando n8n..."
+          curl -s -o /dev/null --max-time 90 "$BASE/healthz" || true
+          sleep 60
+          echo "Disparando el flujo..."
+          code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 90 "$HOOK")
+          echo "Webhook respondio: HTTP $code"
+          if [ "$code" -ge 200 ] && [ "$code" -lt 400 ]; then echo "OK"; else echo "Fallo"; exit 1; fi
